@@ -1,8 +1,34 @@
-import { Plugin, PluginSettingTab, Setting, App, Notice, WorkspaceLeaf } from "obsidian";
+import { Plugin, PluginSettingTab, Setting, App, Notice, WorkspaceLeaf, requestUrl } from "obsidian";
 import { CalendarView, VIEW_TYPE_CALENDAR } from "./view";
 import { DEFAULT_SETTINGS, type CalendarSettings } from "./settings";
 import { resolveConfig, type Granularity, type PeriodicConfig } from "./core/periodic";
 import { activate, verifyToken, STORE_URL } from "./licence";
+import type { ActivationResponse } from "./licence";
+
+/**
+ * Obsidian's own HTTP, not `fetch`. Its review rejects `fetch`, and requestUrl
+ * routes around CORS and works on mobile, which the activation call has to.
+ *
+ * `throw: false` matters: by default requestUrl throws on a non-2xx, which
+ * would turn "that key was not recognised" into the generic network-failure
+ * message and tell a paying customer the wrong thing.
+ */
+const postJson = async (url: string, body: unknown): Promise<ActivationResponse> => {
+  const res = await requestUrl({
+    url,
+    method: "POST",
+    contentType: "application/json",
+    body: JSON.stringify(body),
+    throw: false,
+  });
+  let parsed: { token?: string; error?: string } = {};
+  try {
+    parsed = JSON.parse(res.text) as { token?: string; error?: string };
+  } catch {
+    /* a non-JSON body is a server fault; an empty object reads as one */
+  }
+  return { status: res.status, body: parsed };
+};
 
 export default class CalendarPlugin extends Plugin {
   settings: CalendarSettings = DEFAULT_SETTINGS;
@@ -64,7 +90,10 @@ export default class CalendarPlugin extends Plugin {
       await leaf.setViewState({ type: VIEW_TYPE_CALENDAR, active: true });
     }
 
-    await workspace.revealLeaf(leaf);
+    // Not awaited: revealLeaf only returns a Promise on Obsidian 1.7.2+, and
+    // awaiting it is what tripped the review's no-unsupported-api rule against
+    // our declared minAppVersion. Nothing here depends on its completion.
+    void workspace.revealLeaf(leaf);
     return leaf.view instanceof CalendarView ? leaf.view : null;
   }
 
@@ -142,7 +171,7 @@ class CalendarSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.openInNewTab)
         .onChange(async (v) => { this.plugin.settings.openInNewTab = v; await this.plugin.saveSettings(); }));
 
-    containerEl.createEl("h3", { text: "Pro" });
+    new Setting(containerEl).setName("Pro").setHeading();
 
     if (this.plugin.isPro) {
       new Setting(containerEl)
@@ -177,7 +206,7 @@ class CalendarSettingTab extends PluginSettingTab {
         .onChange((v) => { entered = v; }))
       .addButton((b) => b.setButtonText("Activate").setCta().onClick(async () => {
         b.setButtonText("Checking...").setDisabled(true);
-        const res = await activate(entered);
+        const res = await activate(entered, postJson);
         b.setButtonText("Activate").setDisabled(false);
 
         if (!res.ok) { new Notice(res.message ?? "Activation failed."); return; }

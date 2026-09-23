@@ -13,7 +13,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign } from "node:crypto";
-import { verifyToken, PRODUCT_SLUG } from "../dist-test/licence.js";
+import { verifyToken, activate, PRODUCT_SLUG } from "../dist-test/licence.js";
 
 const b64u = (buf) =>
   Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -77,4 +77,70 @@ test("the shipped public key is present and the right shape", async () => {
   // 32 raw bytes, base64url, no padding. A wrong shape means no customer can
   // ever unlock Pro, and we would not find out until someone asked for a refund.
   assert.match(PUBLIC_KEY_B64U, /^[A-Za-z0-9_-]{43}$/);
+});
+
+
+/**
+ * Activation, which until now could not be tested at all.
+ *
+ * It called `fetch` directly, so exercising it meant standing up a server or
+ * monkey-patching a global. Obsidian's review rejected the bare `fetch` and
+ * asked for its own requestUrl; injecting the call instead of importing it
+ * satisfies that AND makes these cases reachable.
+ *
+ * Every one of them is about what a PAYING customer is told. Telling someone
+ * their key is invalid when our server fell over is the single most expensive
+ * message this plugin can produce.
+ */
+
+const okPost = (body) => async () => ({ status: 200, body });
+
+test("activation returns the token the server signed", async () => {
+  const res = await activate("ABCD-1234", okPost({ token: "sig.body" }));
+  assert.equal(res.ok, true);
+  assert.equal(res.token, "sig.body");
+});
+
+test("sends the key and the product, to the activate endpoint", async () => {
+  let seen = null;
+  await activate("  ABCD-1234  ", async (url, body) => {
+    seen = { url, body };
+    return { status: 200, body: { token: "t" } };
+  });
+  assert.match(seen.url, /\/activate$/);
+  assert.equal(seen.body.key, "ABCD-1234", "the key is trimmed before it is sent");
+  assert.equal(seen.body.product, PRODUCT_SLUG);
+});
+
+test("an empty key never reaches the network", async () => {
+  let called = false;
+  const res = await activate("   ", async () => { called = true; return { status: 200, body: {} }; });
+  assert.equal(called, false);
+  assert.equal(res.ok, false);
+});
+
+test("a network failure does not tell a paying customer their licence is bad", async () => {
+  const res = await activate("ABCD-1234", async () => { throw new Error("offline"); });
+  assert.equal(res.ok, false);
+  assert.match(res.message, /your licence is fine/);
+});
+
+test("a rejected key says so, and says where to find the right one", async () => {
+  const res = await activate("WRONG", async () => ({ status: 400, body: { error: "invalid_licence" } }));
+  assert.equal(res.ok, false);
+  assert.match(res.message, /not recognised/);
+});
+
+test("a server error is not reported as a bad key", async () => {
+  const res = await activate("ABCD-1234", async () => ({ status: 500, body: {} }));
+  assert.equal(res.ok, false);
+  assert.doesNotMatch(res.message, /not recognised/);
+});
+
+test("a 200 with no token is a server fault, not a bad key", async () => {
+  // The shape that would otherwise save an empty token and silently leave a
+  // paying customer on the free tier.
+  const res = await activate("ABCD-1234", async () => ({ status: 200, body: {} }));
+  assert.equal(res.ok, false);
+  assert.doesNotMatch(res.message, /not recognised/);
 });

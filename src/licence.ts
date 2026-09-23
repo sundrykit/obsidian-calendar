@@ -66,39 +66,61 @@ export async function verifyToken(
     );
     if (!ok) return false;
 
-    const claims = JSON.parse(new TextDecoder().decode(new Uint8Array(fromB64u(body))));
+    const claims = JSON.parse(
+      new TextDecoder().decode(new Uint8Array(fromB64u(body)))
+    ) as { p?: string };
     return claims.p === PRODUCT_SLUG;
   } catch {
     return false;
   }
 }
 
+/**
+ * How activation talks to the network.
+ *
+ * Injected rather than imported, for two reasons. Obsidian's review rejects
+ * bare `fetch` and asks for its own `requestUrl`, which routes around CORS and
+ * behaves on mobile. And this file has to stay importable by plain Node, since
+ * its tests compile it and run it without Obsidian anywhere - the repo rule
+ * that keeps the licence logic testable at all.
+ *
+ * So the plugin passes an adapter over `requestUrl`, and the tests pass a fake.
+ */
+export interface ActivationResponse {
+  status: number;
+  body: { token?: string; error?: string };
+}
+
+export type PostJson = (url: string, body: unknown) => Promise<ActivationResponse>;
+
 /** One-time online activation. */
-export async function activate(licenceKey: string): Promise<ActivationResult> {
+export async function activate(licenceKey: string, post: PostJson): Promise<ActivationResult> {
   const key = licenceKey.trim();
   if (!key) return { ok: false, message: "Please enter your licence key." };
 
-  let res: Response;
+  let res: ActivationResponse;
   try {
-    res = await fetch(ACTIVATION_URL + "/activate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, product: PRODUCT_SLUG }),
-    });
+    res = await post(ACTIVATION_URL + "/activate", { key, product: PRODUCT_SLUG });
   } catch {
     // A network failure is NOT an invalid licence. Saying so would be both
     // wrong and the fastest way to make a paying customer angry.
     return { ok: false, message: "Could not reach the activation server. Check your connection and try again — your licence is fine." };
   }
 
-  const data = await res.json().catch(() => ({} as any));
+  const body = res.body ?? {};
 
-  if (!res.ok) {
-    if (data?.error === "invalid_licence") {
+  if (res.status < 200 || res.status >= 300) {
+    if (body.error === "invalid_licence") {
       return { ok: false, message: "That key was not recognised. Check for typos — you can find it in your Gumroad receipt email." };
     }
     return { ok: false, message: "Activation failed. Please try again in a moment." };
   }
 
-  return { ok: true, token: data.token, message: "Pro activated. Thank you." };
+  if (!body.token) {
+    // A 200 with no token is a server fault, not a bad key. Never tell a
+    // paying customer their licence is wrong when it is ours that broke.
+    return { ok: false, message: "Activation failed. Please try again in a moment." };
+  }
+
+  return { ok: true, token: body.token, message: "Pro activated. Thank you." };
 }

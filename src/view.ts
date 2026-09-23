@@ -3,7 +3,7 @@ import {
   buildMonthGrid, shiftMonth, weekdayLabels, MONTH_NAMES, toISO, utc,
   type WeekStart, type DayCell,
 } from "./core/grid";
-import { resolveConfig, notePath, type Granularity } from "./core/periodic";
+import { notePath, type Granularity } from "./core/periodic";
 import type CalendarPlugin from "./main";
 
 export const VIEW_TYPE_CALENDAR = "sundry-calendar-view";
@@ -179,7 +179,7 @@ export class CalendarView extends ItemView {
       const file = await this.createNote(path, cfg.template);
       await this.app.workspace.getLeaf(newLeaf).openFile(file);
       this.render();
-    } catch (e) {
+    } catch {
       new Notice("Could not create " + path + ".");
     }
   }
