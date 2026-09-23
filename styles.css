@@ -1,0 +1,108 @@
+/* Calendar. Uses Obsidian's own theme variables so it inherits any theme
+   the user has installed, light or dark, without us guessing at colours. */
+
+.bertha-cal { padding: 4px 8px 10px; }
+
+.bertha-cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.bertha-cal-title {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  justify-content: center;
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+}
+
+.bertha-cal-month, .bertha-cal-year { padding: 1px 4px; border-radius: 4px; }
+.bertha-cal-year { color: var(--text-muted); font-weight: var(--font-normal); }
+
+.bertha-cal-title .is-clickable { cursor: pointer; }
+.bertha-cal-title .is-clickable:hover { background: var(--background-modifier-hover); }
+
+.bertha-cal-nav, .bertha-cal-today {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.bertha-cal-nav { font-size: 1.1em; line-height: 1; }
+.bertha-cal-today { font-size: var(--font-ui-smaller); }
+.bertha-cal-nav:hover, .bertha-cal-today:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.bertha-cal-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+.bertha-cal-grid th {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-normal);
+  color: var(--text-faint);
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+.bertha-cal-wk {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  width: 1.8em;
+  text-align: right;
+  padding-right: 4px;
+}
+.bertha-cal-wk.is-clickable { cursor: pointer; border-radius: 4px; }
+.bertha-cal-wk.is-clickable:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.bertha-cal-grid td { padding: 1px; text-align: center; }
+
+.bertha-cal-day {
+  position: relative;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 0;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+.bertha-cal-day:hover { background: var(--background-modifier-hover); }
+
+.bertha-cal-day.is-outside { color: var(--text-faint); }
+
+.bertha-cal-day.is-today {
+  color: var(--text-on-accent);
+  background: var(--interactive-accent);
+  font-weight: var(--font-semibold);
+}
+.bertha-cal-day.is-today:hover { background: var(--interactive-accent-hover); }
+
+/* A dot marks a day that already has a note. Small, low-contrast, ignorable. */
+.bertha-cal-day.has-note::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.bertha-cal-day.is-today.has-note::after { background: var(--text-on-accent); }
+
+.bertha-cal-foot {
+  margin-top: 10px;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  text-align: center;
+}

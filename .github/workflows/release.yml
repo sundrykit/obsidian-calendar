@@ -1,0 +1,56 @@
+# Publishing an Obsidian plugin is a GitHub release. No GUI, no dashboard,
+# no human. Tag a version and this ships it.
+#
+#   git tag 1.0.1 && git push origin 1.0.1
+#
+# That is the entire publish step, and it is why Obsidian is V1.
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: npm ci
+
+      # Never ship a build that fails its own tests.
+      - name: Test
+        run: |
+          npx tsc src/core/grid.ts src/core/periodic.ts --outDir dist-test \
+            --module esnext --target es2022 --moduleResolution bundler
+          npm test
+
+      - name: Build
+        run: npm run build
+
+      # The manifest version must match the tag, or Obsidian installs the wrong
+      # thing and every user gets a silent mismatch. Fail loudly instead.
+      - name: Verify manifest version matches tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "Tag $TAG does not match manifest version $MANIFEST"
+            exit 1
+          fi
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF#refs/tags/}" \
+            --title "${GITHUB_REF#refs/tags/}" \
+            --generate-notes \
+            main.js manifest.json styles.css
