@@ -40,9 +40,20 @@ by email, and you paste it into the plugin's settings once.
 the plugin verifies it locally on your own machine. If our licence server
 disappeared tomorrow, your copy would keep working.
 
+## Network use, in full
+
+The free plugin makes **no network requests at all**.
+
+Pro makes exactly **one**, and only when you press Activate: it sends your
+licence key and the product name to `https://licence.sundrykit.dev/activate`,
+which returns a signed token. Nothing else is sent, and nothing about your
+vault, your notes or you is included.
+
+After that the plugin verifies that token on your own machine and never
+contacts the server again — not on startup, not on a schedule, not ever.
+
 ## What it does not do
 
-- It does not phone home. Ever.
 - It does not read your notes' contents — only their filenames, to draw the dots.
 - It does not create weekly, monthly or yearly notes unless you have configured
   those formats yourself.
