@@ -1,8 +1,8 @@
 {
   "id": "sundry-calendar",
   "name": "Calendar Notes",
-  "version": "1.0.1",
-  "minAppVersion": "1.5.0",
+  "version": "1.0.2",
+  "minAppVersion": "1.7.2",
   "description": "A maintained calendar for periodic notes. Click a day to open or create it; week, month and year headings open their own notes.",
   "author": "Sundrykit",
   "isDesktopOnly": false,

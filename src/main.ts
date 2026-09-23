@@ -1,9 +1,32 @@
 import { Plugin, PluginSettingTab, Setting, App, Notice, WorkspaceLeaf, requestUrl } from "obsidian";
 import { CalendarView, VIEW_TYPE_CALENDAR } from "./view";
+import type { WeekStart } from "./core/grid";
 import { DEFAULT_SETTINGS, type CalendarSettings } from "./settings";
 import { resolveConfig, type Granularity, type PeriodicConfig } from "./core/periodic";
 import { activate, verifyToken, STORE_URL } from "./licence";
 import type { ActivationResponse } from "./licence";
+
+/**
+ * The undocumented corners of the Obsidian app object that hold the two
+ * plugins we read settings from. Narrow on purpose: everything named here is
+ * something we actually touch, and anything Obsidian changes should break the
+ * build rather than fail silently at runtime.
+ */
+interface PeriodicHost {
+  internalPlugins?: {
+    getPluginById?: (id: string) => {
+      instance?: { options?: PeriodicConfigSource["dailyNotes"] };
+    } | undefined;
+  };
+  plugins?: {
+    plugins?: Record<string, { settings?: PeriodicConfigSource["periodicNotes"] } | undefined>;
+  };
+}
+
+interface PeriodicConfigSource {
+  dailyNotes?: { format?: string; folder?: string; template?: string } | null;
+  periodicNotes?: Record<string, { enabled?: boolean; format?: string; folder?: string; template?: string }> | null;
+}
 
 /**
  * Obsidian's own HTTP, not `fetch`. Its review rejects `fetch`, and requestUrl
@@ -90,9 +113,9 @@ export default class CalendarPlugin extends Plugin {
       await leaf.setViewState({ type: VIEW_TYPE_CALENDAR, active: true });
     }
 
-    // Not awaited: revealLeaf only returns a Promise on Obsidian 1.7.2+, and
-    // awaiting it is what tripped the review's no-unsupported-api rule against
-    // our declared minAppVersion. Nothing here depends on its completion.
+    // revealLeaf only exists in this form on Obsidian 1.7.2+, which is why
+    // manifest.json declares that as minAppVersion. Not awaited because
+    // nothing here depends on the reveal having finished.
     void workspace.revealLeaf(leaf);
     return leaf.view instanceof CalendarView ? leaf.view : null;
   }
@@ -109,9 +132,13 @@ export default class CalendarPlugin extends Plugin {
    * user never configures the same thing twice.
    */
   configFor(g: Granularity): PeriodicConfig {
-    const anyApp = this.app as any;
-    const daily = anyApp.internalPlugins?.getPluginById?.("daily-notes")?.instance?.options ?? null;
-    const periodic = anyApp.plugins?.plugins?.["periodic-notes"]?.settings ?? null;
+    // Both of these are undocumented internals: Obsidian does not expose the
+    // Daily Notes or Periodic Notes settings in its public types. Reading them
+    // is the whole point of this plugin, so the shape is declared narrowly
+    // here rather than casting the app to `any` and losing every type below it.
+    const host = this.app as unknown as PeriodicHost;
+    const daily = host.internalPlugins?.getPluginById?.("daily-notes")?.instance?.options ?? null;
+    const periodic = host.plugins?.plugins?.["periodic-notes"]?.settings ?? null;
     return resolveConfig(g, { dailyNotes: daily, periodicNotes: periodic });
   }
 
@@ -147,7 +174,7 @@ class CalendarSettingTab extends PluginSettingTab {
         .addOption("6", "Saturday")
         .setValue(String(this.plugin.settings.weekStart))
         .onChange(async (v) => {
-          this.plugin.settings.weekStart = v === "locale" ? "locale" : (Number(v) as any);
+          this.plugin.settings.weekStart = v === "locale" ? "locale" : (Number(v) as WeekStart);
           await this.plugin.saveSettings();
         }));
 
