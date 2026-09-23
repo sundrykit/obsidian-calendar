@@ -1,4 +1,4 @@
-# Calendar for Obsidian
+# Calendar Notes
 
 A calendar in your sidebar. Click a day to open or create its note.
 
