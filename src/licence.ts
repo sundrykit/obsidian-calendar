@@ -6,7 +6,7 @@
  * keep working. See OPS/licence-server/README.md.
  */
 
-export const PUBLIC_KEY_B64U = "REPLACE_AT_RELEASE";
+export const PUBLIC_KEY_B64U = "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU";
 export const ACTIVATION_URL = "https://bertha-licence.workers.dev";
 export const PRODUCT_SLUG = "obsidian-calendar-pro";
 
@@ -36,7 +36,7 @@ export interface ActivationResult {
 /** Verify a stored token offline. Never touches the network. */
 export async function verifyToken(token: string | undefined): Promise<boolean> {
   if (!token || !token.includes(".")) return false;
-  if (PUBLIC_KEY_B64U === "REPLACE_AT_RELEASE") return false;
+  if (PUBLIC_KEY_B64U === "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU") return false;
 
   const [body, sig] = token.split(".");
   if (!body || !sig) return false;
