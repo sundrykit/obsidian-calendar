@@ -6,6 +6,22 @@ import {
 import { notePath, type Granularity } from "./core/periodic";
 import type CalendarPlugin from "./main";
 
+/**
+ * Obsidian re-exports moment without types, so every call through it is an
+ * `any` and every value taken off the result is unchecked. The review flagged
+ * nine of those, all from these two call sites.
+ *
+ * One narrow adapter contains it: these are the only two moment behaviours
+ * this plugin uses, and naming them means a future misuse is a build error
+ * rather than another untyped hole.
+ */
+interface MomentLike {
+  isValid(): boolean;
+  format(fmt: string): string;
+}
+type MomentFn = (input: string, format: string, strict?: boolean) => MomentLike;
+const parseDate = moment as unknown as MomentFn;
+
 export const VIEW_TYPE_CALENDAR = "sundry-calendar-view";
 
 export class CalendarView extends ItemView {
@@ -58,7 +74,7 @@ export class CalendarView extends ItemView {
     for (const f of this.app.vault.getMarkdownFiles()) {
       const folderOk = !cfg.folder || f.path.startsWith(cfg.folder + "/");
       if (!folderOk) continue;
-      const parsed = moment(f.basename, cfg.format, true);
+      const parsed = parseDate(f.basename, cfg.format, true);
       if (parsed.isValid()) this.existing.add(parsed.format("YYYY-MM-DD"));
     }
   }
@@ -157,7 +173,7 @@ export class CalendarView extends ItemView {
       return;
     }
 
-    const formatted = moment(toISO(date), "YYYY-MM-DD").format(cfg.format);
+    const formatted = parseDate(toISO(date), "YYYY-MM-DD").format(cfg.format);
     const path = normalizePath(notePath(cfg.folder, formatted));
     const existing = this.app.vault.getAbstractFileByPath(path);
 
