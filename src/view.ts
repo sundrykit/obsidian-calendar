@@ -6,7 +6,7 @@ import {
 import { resolveConfig, notePath, type Granularity } from "./core/periodic";
 import type CalendarPlugin from "./main";
 
-export const VIEW_TYPE_CALENDAR = "bertha-calendar-view";
+export const VIEW_TYPE_CALENDAR = "sundry-calendar-view";
 
 export class CalendarView extends ItemView {
   private plugin: CalendarPlugin;
@@ -66,7 +66,7 @@ export class CalendarView extends ItemView {
   render() {
     const root = this.contentEl;
     root.empty();
-    root.addClass("bertha-cal");
+    root.addClass("sundry-cal");
     this.indexExisting();
 
     const isPro = this.plugin.isPro;
@@ -76,17 +76,17 @@ export class CalendarView extends ItemView {
     )));
 
     // ---- header -----------------------------------------------------------
-    const head = root.createDiv({ cls: "bertha-cal-head" });
-    const prev = head.createEl("button", { cls: "bertha-cal-nav", text: "\u2039" });
+    const head = root.createDiv({ cls: "sundry-cal-head" });
+    const prev = head.createEl("button", { cls: "sundry-cal-nav", text: "\u2039" });
     prev.setAttribute("aria-label", "Previous month");
     prev.onclick = () => this.step(-1);
 
-    const title = head.createDiv({ cls: "bertha-cal-title" });
+    const title = head.createDiv({ cls: "sundry-cal-title" });
 
     // ISSUE #313 / #145 — clicking the month or year opens that periodic note.
     // Two years requested, never shipped by the incumbent.
-    const mEl = title.createSpan({ cls: "bertha-cal-month", text: MONTH_NAMES[this.month - 1] });
-    const yEl = title.createSpan({ cls: "bertha-cal-year", text: String(this.year) });
+    const mEl = title.createSpan({ cls: "sundry-cal-month", text: MONTH_NAMES[this.month - 1] });
+    const yEl = title.createSpan({ cls: "sundry-cal-year", text: String(this.year) });
 
     if (isPro) {
       mEl.addClass("is-clickable");
@@ -101,17 +101,17 @@ export class CalendarView extends ItemView {
       yEl.setAttribute("aria-label", hint);
     }
 
-    const next = head.createEl("button", { cls: "bertha-cal-nav", text: "\u203A" });
+    const next = head.createEl("button", { cls: "sundry-cal-nav", text: "\u203A" });
     next.setAttribute("aria-label", "Next month");
     next.onclick = () => this.step(1);
 
-    const todayBtn = head.createEl("button", { cls: "bertha-cal-today", text: "Today" });
+    const todayBtn = head.createEl("button", { cls: "sundry-cal-today", text: "Today" });
     todayBtn.onclick = () => this.goToToday();
 
     // ---- grid -------------------------------------------------------------
-    const table = root.createEl("table", { cls: "bertha-cal-grid" });
+    const table = root.createEl("table", { cls: "sundry-cal-grid" });
     const thead = table.createEl("thead").createEl("tr");
-    if (this.plugin.settings.showWeekNumbers) thead.createEl("th", { cls: "bertha-cal-wk", text: "" });
+    if (this.plugin.settings.showWeekNumbers) thead.createEl("th", { cls: "sundry-cal-wk", text: "" });
     for (const label of weekdayLabels(ws)) thead.createEl("th", { text: label });
 
     const tbody = table.createEl("tbody");
@@ -119,7 +119,7 @@ export class CalendarView extends ItemView {
       const tr = tbody.createEl("tr");
 
       if (this.plugin.settings.showWeekNumbers) {
-        const th = tr.createEl("th", { cls: "bertha-cal-wk", text: String(week.weekNumber) });
+        const th = tr.createEl("th", { cls: "sundry-cal-wk", text: String(week.weekNumber) });
         if (isPro) {
           th.addClass("is-clickable");
           th.setAttribute("aria-label", "Open weekly note");
@@ -130,7 +130,7 @@ export class CalendarView extends ItemView {
 
       for (const day of week.days) {
         const td = tr.createEl("td");
-        const cell = td.createDiv({ cls: "bertha-cal-day", text: String(day.day) });
+        const cell = td.createDiv({ cls: "sundry-cal-day", text: String(day.day) });
         if (!day.inMonth) cell.addClass("is-outside");
         if (day.isToday) cell.addClass("is-today");
         if (this.existing.has(day.iso)) cell.addClass("has-note");
@@ -139,7 +139,7 @@ export class CalendarView extends ItemView {
     }
 
     if (!isPro) {
-      const foot = root.createDiv({ cls: "bertha-cal-foot" });
+      const foot = root.createDiv({ cls: "sundry-cal-foot" });
       foot.createSpan({ text: "Monthly, weekly and yearly notes are Pro." });
     }
   }

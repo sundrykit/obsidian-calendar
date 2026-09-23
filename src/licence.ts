@@ -7,7 +7,7 @@
  */
 
 export const PUBLIC_KEY_B64U = "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU";
-export const ACTIVATION_URL = "https://bertha-licence.workers.dev";
+export const ACTIVATION_URL = "https://licence.sundrykit.workers.dev";
 export const PRODUCT_SLUG = "obsidian-calendar-pro";
 
 /**

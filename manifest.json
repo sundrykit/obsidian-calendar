@@ -1,9 +1,10 @@
 {
-  "id": "bertha-calendar",
+  "id": "sundry-calendar",
   "name": "Calendar",
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
   "description": "A maintained calendar for periodic notes. Click a day to open or create it; week, month and year headings open their own notes.",
-  "author": "Big Bertha",
-  "isDesktopOnly": false
+  "author": "Sundrykit",
+  "isDesktopOnly": false,
+  "authorUrl": "https://github.com/sundrykit"
 }
