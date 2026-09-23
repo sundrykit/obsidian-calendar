@@ -10,8 +10,14 @@ on:
   push:
     tags: ["*"]
 
+# `attestations` and `id-token` are what let GitHub sign a statement that
+# these exact files were built by this workflow from this repository. Obsidian's
+# automated review asks for it by name, and without it a user downloading
+# main.js has no way to tell it came from the source they can read.
 permissions:
   contents: write
+  attestations: write
+  id-token: write
 
 jobs:
   release:
@@ -45,6 +51,15 @@ jobs:
             echo "Tag $TAG does not match manifest version $MANIFEST"
             exit 1
           fi
+
+      # Must run before the release is created, so the attestation exists for
+      # the same bytes that get attached.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            styles.css
 
       - name: Create release
         env:
