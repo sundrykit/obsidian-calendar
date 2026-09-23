@@ -7,9 +7,12 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "test": "node --test test/*.test.mjs"
+    "test": "npm run compile-test && node --test test/*.test.mjs",
+    "compile-test": "tsc src/core/grid.ts src/core/periodic.ts src/licence.ts --outDir dist-test --module esnext --target es2022 --moduleResolution bundler"
   },
-  "keywords": ["obsidian-plugin"],
+  "keywords": [
+    "obsidian-plugin"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -7,7 +7,7 @@
  */
 
 export const PUBLIC_KEY_B64U = "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU";
-export const ACTIVATION_URL = "https://licence.sundrykit.workers.dev";
+export const ACTIVATION_URL = "https://licence.sundrykit.dev";
 export const PRODUCT_SLUG = "obsidian-calendar-pro";
 
 /**
@@ -34,16 +34,29 @@ export interface ActivationResult {
 }
 
 /** Verify a stored token offline. Never touches the network. */
-export async function verifyToken(token: string | undefined): Promise<boolean> {
+export async function verifyToken(
+  token: string | undefined,
+  // Injectable so a test can sign with a throwaway key pair and prove the
+  // whole chain works. A gate nobody has watched open is not a gate.
+  publicKeyB64u: string = PUBLIC_KEY_B64U,
+): Promise<boolean> {
   if (!token || !token.includes(".")) return false;
-  if (PUBLIC_KEY_B64U === "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU") return false;
+  // Fail closed only when there is genuinely no key to check against.
+  //
+  // This line used to compare the constant against a literal copy of itself,
+  // on the belief that the constant was a placeholder. It is not - it is the
+  // real public key, derived from the signing key the licence server uses. So
+  // the guard matched every time and verifyToken ALWAYS returned false. Every
+  // customer could pay, activate, and still be told they were on the free
+  // tier. See DECISIONS.md D055.
+  if (!publicKeyB64u) return false;
 
   const [body, sig] = token.split(".");
   if (!body || !sig) return false;
 
   try {
     const key = await crypto.subtle.importKey(
-      "raw", fromB64u(PUBLIC_KEY_B64U), { name: "Ed25519" }, false, ["verify"]
+      "raw", fromB64u(publicKeyB64u), { name: "Ed25519" }, false, ["verify"]
     );
     const ok = await crypto.subtle.verify(
       "Ed25519", key, fromB64u(sig), new TextEncoder().encode(body)
