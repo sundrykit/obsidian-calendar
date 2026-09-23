@@ -2,7 +2,7 @@ import { Plugin, PluginSettingTab, Setting, App, Notice, WorkspaceLeaf } from "o
 import { CalendarView, VIEW_TYPE_CALENDAR } from "./view";
 import { DEFAULT_SETTINGS, type CalendarSettings } from "./settings";
 import { resolveConfig, type Granularity, type PeriodicConfig } from "./core/periodic";
-import { activate, verifyToken } from "./licence";
+import { activate, verifyToken, STORE_URL } from "./licence";
 
 export default class CalendarPlugin extends Plugin {
   settings: CalendarSettings = DEFAULT_SETTINGS;
@@ -159,6 +159,15 @@ class CalendarSettingTab extends PluginSettingTab {
 
     const desc = containerEl.createEl("p", { cls: "setting-item-description" });
     desc.setText("Pro adds clickable month, week and year headings that open the matching periodic note. One payment, no subscription, no account.");
+
+    // Without this the free tier is a dead end: the settings tab asked for a
+    // licence key and never said where one comes from.
+    new Setting(containerEl)
+      .setName("Get Pro")
+      .setDesc("A$12, once. Your key arrives by email straight away.")
+      .addButton((b) => b
+        .setButtonText("Open store")
+        .onClick(() => window.open(STORE_URL, "_blank")));
 
     let entered = "";
     new Setting(containerEl)

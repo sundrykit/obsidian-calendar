@@ -25,13 +25,16 @@ This is a fresh implementation — not a fork — that ships those.
 - Ctrl/Cmd-click to open in a new tab
 - Reads your existing Daily Notes or Periodic Notes settings — nothing to set up twice
 
-## Pro — US$12, one payment
+## Pro — A$12, one payment
 
 - Click the **month** to open the monthly note
 - Click the **year** to open the yearly note
 - Click a **week number** to open the weekly note
 
 No subscription. No account. No telemetry.
+
+**[Get Pro — A$12](https://thesundrykit.gumroad.com/l/ccole)** · your key arrives
+by email, and you paste it into the plugin's settings once.
 
 **Activation is one-time and then fully offline.** After you enter your key once,
 the plugin verifies it locally on your own machine. If our licence server

@@ -10,6 +10,9 @@ export const PUBLIC_KEY_B64U = "4eJyb_pjgjFxTiXBN3cVBZRqduAV_49gE6IPfzZ6DuU";
 export const ACTIVATION_URL = "https://licence.sundrykit.dev";
 export const PRODUCT_SLUG = "obsidian-calendar-pro";
 
+/** Where a licence key actually comes from. The settings tab links to it. */
+export const STORE_URL = "https://thesundrykit.gumroad.com/l/ccole";
+
 /**
  * Decode base64url to a plain ArrayBuffer.
  *
